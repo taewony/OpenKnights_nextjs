@@ -9,7 +9,7 @@ const ProjectsPage: React.FC = () => {
       <p className="text-xl text-gray-600 dark:text-gray-300 mb-6">
         Browse all the amazing projects submitted to our contests.
       </p>
-      <div className="space-y-4">
+      <div className="space-y-4 flex flex-col items-center">
         <Link to="/projects/123">
           <Button variant="outline">View Project Example 1</Button>
         </Link>

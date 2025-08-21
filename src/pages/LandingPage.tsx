@@ -11,9 +11,11 @@ const LandingPage: React.FC = () => {
         <p className="text-xl mb-8 max-w-2xl mx-auto">
           Discover exciting contests, showcase innovative projects, and connect with talented users.
         </p>
-        <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-          Request a Contest Registration
-        </Button>
+        <Link to="/registration">
+          <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
+            내 프로젝트 등록
+          </Button>
+        </Link>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">

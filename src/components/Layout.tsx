@@ -9,7 +9,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
       <header className="bg-primary text-primary-foreground p-4 shadow-md">
         <nav className="container mx-auto flex justify-between items-center">
           <Link to="/" className="text-2xl font-bold">
-            Contest App
+            OpenKnights
           </Link>
           <div className="space-x-4">
             <Link to="/contests">
@@ -21,7 +21,9 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
             <Link to="/users">
               <Button variant="ghost" className="text-primary-foreground hover:bg-primary-foreground/10">Users</Button>
             </Link>
-            <Button variant="secondary">Request Registration</Button>
+            <Link to="/mypage">
+              <Button variant="secondary">My Page</Button>
+            </Link>
           </div>
         </nav>
       </header>
