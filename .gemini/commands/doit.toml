@@ -1,0 +1,7 @@
+# ~/.gemini/commands/makeitso.toml
+
+description = "현재 대화에서 논의된 계획이나 실행 항목을 수행합니다."
+
+prompt = """
+just do it, as you suggested, or planned.
+"""
