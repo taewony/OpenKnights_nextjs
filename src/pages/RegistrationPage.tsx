@@ -2,8 +2,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore"; 
+import { createUserWithEmailAndPassword, deleteUser } from "firebase/auth";
+import { doc, setDoc } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,8 +23,12 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
+import { generateUniqueName } from "@/lib/firestoreUtils";
+import { Role, User } from "@/types";
 
 const formSchema = z.object({
+  name: z.string().min(2, { message: "Name must be at least 2 characters." }),
+  studentId: z.string().optional(),
   email: z.string().email({ message: "Invalid email address." }),
   password: z
     .string()
@@ -36,6 +40,8 @@ const RegistrationPage = () => {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
+      name: "",
+      studentId: "",
       email: "",
       password: "",
     },
@@ -44,26 +50,43 @@ const RegistrationPage = () => {
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       // 1. Create user in Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        values.email,
+        values.password
+      );
       const user = userCredential.user;
 
       // 2. Create user document in Firestore
       try {
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          name: values.email.split('@')[0], // Set initial name from email
-          introduction: "Welcome! Please update your introduction.", // Default introduction
-        });
+        const uniqueName = await generateUniqueName("users", "name", values.name);
+
+        const newUser: User = {
+          uid: user.uid,
+          email: user.email!,
+          name: uniqueName,
+          studentId: values.studentId,
+          roles: [Role.GUEST],
+          projects: [],
+          introduction: "Welcome! Please update your introduction.",
+          imageUrl: "",
+        };
+
+        await setDoc(doc(db, "users", user.uid), newUser);
+
       } catch (firestoreError) {
-        console.error("Error creating user document in Firestore:", firestoreError);
+        console.error(
+          "Error creating user document in Firestore:",
+          firestoreError
+        );
         toast.error("Failed to create user profile. Please contact support.");
-        // Optional: You might want to delete the created auth user here if firestore fails
-        return; 
+        // Delete the Firebase Auth user if Firestore document creation fails
+        await deleteUser(user);
+        return;
       }
 
       toast.success("Registration successful!");
       navigate("/mypage");
-
     } catch (error: any) {
       console.error("Registration failed:", error);
       let errorMessage = "An unknown error occurred.";
@@ -82,12 +105,38 @@ const RegistrationPage = () => {
         <CardHeader>
           <CardTitle className="text-2xl">Register</CardTitle>
           <CardDescription>
-            Enter your email below to create your account.
+            Enter your details below to create your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <FormField
+                control={form.control}
+                name="name"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Name</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Hong Gildong" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="studentId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Student ID</FormLabel>
+                    <FormControl>
+                      <Input placeholder="202412345" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <FormField
                 control={form.control}
                 name="email"

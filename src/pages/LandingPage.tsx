@@ -1,9 +1,28 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
+import CreateProjectDialog from "../components/CreateProjectDialog";
 
 const LandingPage: React.FC = () => {
+  const { currentUser } = useAuth();
+  const navigate = useNavigate();
+  const [isCreateProjectDialogOpen, setIsCreateProjectDialogOpen] = useState(false);
+
+  const handleRegisterProjectClick = () => {
+    if (currentUser) {
+      setIsCreateProjectDialogOpen(true);
+    } else {
+      navigate("/login");
+    }
+  };
+
+  const handleProjectCreated = () => {
+    // Optionally navigate to projects page or show a success message
+    navigate("/projects");
+  };
+
   return (
     <div className="space-y-8">
       <section className="text-center py-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-lg">
@@ -11,11 +30,9 @@ const LandingPage: React.FC = () => {
         <p className="text-xl mb-8 max-w-2xl mx-auto">
           Discover exciting contests, showcase innovative projects, and connect with talented users.
         </p>
-        <Link to="/registration">
-          <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100">
-            내 프로젝트 등록
-          </Button>
-        </Link>
+        <Button size="lg" className="bg-white text-blue-600 hover:bg-gray-100" onClick={handleRegisterProjectClick}>
+          내 프로젝트 등록
+        </Button>
       </section>
 
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -70,6 +87,12 @@ const LandingPage: React.FC = () => {
           </CardContent>
         </Card>
       </section>
+
+      <CreateProjectDialog
+        isOpen={isCreateProjectDialogOpen}
+        onOpenChange={setIsCreateProjectDialogOpen}
+        onProjectCreated={handleProjectCreated}
+      />
     </div>
   );
 };

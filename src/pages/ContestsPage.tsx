@@ -10,6 +10,8 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Users } from "lucide-react"; // Using Users icon for staff
+import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 interface Contest {
   id: string; // Document ID from Firestore
@@ -22,6 +24,7 @@ interface Contest {
 const ContestsPage: React.FC = () => {
   const [contests, setContests] = useState<Contest[]>([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchContests = async () => {
@@ -42,6 +45,10 @@ const ContestsPage: React.FC = () => {
 
     fetchContests();
   }, []);
+
+  const handleViewProjects = (term: string) => {
+    navigate(`/projects?term=${term}`);
+  };
 
   if (loading) {
     return (
@@ -80,6 +87,11 @@ const ContestsPage: React.FC = () => {
                       {staffMember}
                     </Badge>
                   ))}
+                </div>
+                <div className="mt-4 flex justify-end">
+                  <Button onClick={() => handleViewProjects(contest.term)} variant="outline">
+                    View Projects
+                  </Button>
                 </div>
               </CardContent>
             </Card>

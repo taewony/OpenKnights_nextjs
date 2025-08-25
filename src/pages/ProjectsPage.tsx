@@ -1,6 +1,10 @@
 import React, { useState, useEffect } from "react";
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs, query, where } from "firebase/firestore";
 import { db } from "@/lib/firebase";
+import { Project } from "@/types";
+import { toast } from "sonner";
+import { useLocation } from "react-router-dom";
+
 import {
   Card,
   CardContent,
@@ -10,45 +14,42 @@ import {
   CardFooter,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, User, Award, ClipboardList, FileText, Calendar, GitBranch } from "lucide-react";
-
-interface Project {
-  id: string;
-  teamName: string;
-  description: string;
-  leaderName: string;
-  members: string[];
-  mentor: string;
-  name: string;
-  note: string;
-  phase: string;
-  term: string;
-  preTotal: number;
-  finalTotal: number;
-}
+import { Users, User, Award, ClipboardList, FileText, Calendar } from "lucide-react";
 
 const ProjectsPage: React.FC = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const location = useLocation();
+
+  const fetchProjects = async (filterTerm?: string) => {
+    setLoading(true);
+    console.log("Fetching projects with filterTerm:", filterTerm);
+    try {
+      let projectsQuery = collection(db, "projects");
+      if (filterTerm) {
+        projectsQuery = query(projectsQuery, where("term", "==", filterTerm));
+      }
+      const querySnapshot = await getDocs(projectsQuery);
+      const projectsList = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...(doc.data()),
+      })) as Project[];
+      setProjects(projectsList);
+      console.log("Fetched projects:", projectsList);
+    } catch (error) {
+      console.error("Error fetching projects: ", error);
+      toast.error("Failed to fetch projects.");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchProjects = async () => {
-      try {
-        const querySnapshot = await getDocs(collection(db, "projects"));
-        const projectsList: Project[] = querySnapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...(doc.data() as Omit<Project, 'id'>),
-        }));
-        setProjects(projectsList);
-      } catch (error) {
-        console.error("Error fetching projects: ", error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchProjects();
-  }, []);
+    const queryParams = new URLSearchParams(location.search);
+    const term = queryParams.get("term");
+    console.log("ProjectsPage useEffect - term from URL:", term);
+    fetchProjects(term || undefined);
+  }, [location.search]);
 
   if (loading) {
     return (
@@ -59,8 +60,11 @@ const ProjectsPage: React.FC = () => {
   }
 
   return (
-    <div className="py-12">
-      <h1 className="text-4xl font-bold mb-8 text-center">Projects</h1>
+    <div className="container mx-auto py-12 px-4">
+      <div className="flex justify-between items-center mb-8">
+        <h1 className="text-4xl font-bold text-center">Projects: {projects.length}개</h1>
+      </div>
+
       {projects.length > 0 ? (
         <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-2 xl:grid-cols-3">
           {projects.map((project) => (
@@ -119,9 +123,10 @@ const ProjectsPage: React.FC = () => {
           ))}
         </div>
       ) : (
-        <p className="text-center text-gray-600 dark:text-gray-300">
-          No projects found.
-        </p>
+        <div className="text-center p-10 border-2 border-dashed rounded-lg mt-8">
+            <h2 className="text-xl font-semibold">No Projects Found</h2>
+            <p className="text-muted-foreground mt-2">Be the first to create a project!</p>
+        </div>
       )}
     </div>
   );
