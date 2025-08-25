@@ -1,15 +1,15 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { doc, setDoc } from "firebase/firestore"; 
-import { auth, db } from "@/lib/firebase";
+import { Link, useNavigate } from "react-router-dom";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
+  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -26,12 +26,10 @@ import { toast } from "sonner";
 
 const formSchema = z.object({
   email: z.string().email({ message: "Invalid email address." }),
-  password: z
-    .string()
-    .min(6, { message: "Password must be at least 6 characters." }),
+  password: z.string().min(1, { message: "Password is required." }),
 });
 
-const RegistrationPage = () => {
+const LoginPage = () => {
   const navigate = useNavigate();
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -43,34 +41,14 @@ const RegistrationPage = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // 1. Create user in Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, values.email, values.password);
-      const user = userCredential.user;
-
-      // 2. Create user document in Firestore
-      try {
-        await setDoc(doc(db, "users", user.uid), {
-          email: user.email,
-          name: values.email.split('@')[0], // Set initial name from email
-          introduction: "Welcome! Please update your introduction.", // Default introduction
-        });
-      } catch (firestoreError) {
-        console.error("Error creating user document in Firestore:", firestoreError);
-        toast.error("Failed to create user profile. Please contact support.");
-        // Optional: You might want to delete the created auth user here if firestore fails
-        return; 
-      }
-
-      toast.success("Registration successful!");
+      await signInWithEmailAndPassword(auth, values.email, values.password);
+      toast.success("Login successful!");
       navigate("/mypage");
-
     } catch (error: any) {
-      console.error("Registration failed:", error);
-      let errorMessage = "An unknown error occurred.";
-      if (error.code === "auth/email-already-in-use") {
-        errorMessage = "This email is already in use.";
-      } else if (error.code === "auth/weak-password") {
-        errorMessage = "The password is too weak.";
+      console.error("Login failed:", error);
+      let errorMessage = "Failed to log in. Please check your credentials.";
+      if (error.code === "auth/user-not-found" || error.code === "auth/wrong-password" || error.code === "auth/invalid-credential") {
+        errorMessage = "Invalid email or password.";
       }
       toast.error(errorMessage);
     }
@@ -80,9 +58,9 @@ const RegistrationPage = () => {
     <div className="flex justify-center items-center h-full py-12">
       <Card className="w-full max-w-sm">
         <CardHeader>
-          <CardTitle className="text-2xl">Register</CardTitle>
+          <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to create your account.
+            Enter your email and password to access your account.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -115,14 +93,20 @@ const RegistrationPage = () => {
                 )}
               />
               <Button type="submit" className="w-full">
-                Create an account
+                Sign In
               </Button>
             </form>
           </Form>
         </CardContent>
+        <CardFooter className="text-sm">
+          Don't have an account?&nbsp;
+          <Link to="/registration" className="underline">
+            Register
+          </Link>
+        </CardFooter>
       </Card>
     </div>
   );
 };
 
-export default RegistrationPage;
+export default LoginPage;

@@ -7,7 +7,7 @@ const LandingPage: React.FC = () => {
   return (
     <div className="space-y-8">
       <section className="text-center py-12 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg shadow-lg">
-        <h1 className="text-5xl font-extrabold mb-4">Welcome to the Contest Platform!</h1>
+        <h1 className="text-5xl font-extrabold mb-4">우송대학교 경진대회 플랫폼!</h1>
         <p className="text-xl mb-8 max-w-2xl mx-auto">
           Discover exciting contests, showcase innovative projects, and connect with talented users.
         </p>
